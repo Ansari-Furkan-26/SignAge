@@ -93,15 +93,18 @@ const EnquiryListPage = () => {
   };
 
   // Handle email click
-  const handleEmail = (email, name) => {
-    const subject = `Re: Your enquiry with SignCraft`;
-    const body = `Dear ${name},\n\nThank you for reaching out to SignCraft regarding your signage needs. We've received your message and our team will get back to you shortly with more information.\n\nIn the meantime, feel free to browse our portfolio at [website link] to see examples of our work.\n\nBest regards,\nThe SignCraft Team`;
-    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-  };
+const handleEmail = (email, name) => {
+  const subject = `Re: Your enquiry with Ansh Enterprises`;
+  const body = `Dear ${name},\n\nThank you for reaching out to Ansh Enterprises regarding your signage needs. We've received your message and our team will get back to you shortly.\n\nBest regards,\nThe Ansh Enterprises Team`;
+
+  // Force navigation to mail client
+  window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+};
+
 
   // Handle WhatsApp click
   const handleWhatsApp = (phone) => {
-    const message = `Hi, thank you for contacting SignCraft. We've received your enquiry and will get back to you soon. Could you please let us know if you have any specific requirements or deadlines for your signage project?`;
+    const message = `Hi, thank you for contacting Ansh Enterprises. We've received your enquiry and will get back to you soon. Could you please let us know if you have any specific requirements or deadlines for your signage project?`;
     const formattedPhone = phone.replace(/[^\d]/g, ''); // Remove non-numeric characters
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`);
   };

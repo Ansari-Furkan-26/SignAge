@@ -8,8 +8,8 @@ const Contact = () => {
         <>
         <Helmet>
         <title>Contact Us | Start Your Custom Order Today</title>
-        <meta name="description" content="Welcome to YourBrand. Discover custom t-shirts, bags, caps, and more." />
-        <link rel="canonical" href="https://yourdomain.com/" />
+        <meta name="description" content="Contact Acrylic Sign Boards for custom signage solutions. Get quotes for acrylic boards, LED signs, 3D letters & branding needs in India." />
+        <link rel="canonical" href="https://acrylicsignboards.in/" />
         </Helmet>
 
         <div className="bg-[#E63025]">

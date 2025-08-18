@@ -13,7 +13,7 @@ const Header = () => {
 
   const navItems = [
     // { name: "Work", href: "/work" },
-    { name: "Custom", href: "/custom" },
+    { name: "Custom Neon", href: "/custom" },
     { name: "Blog", href: "/blog" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/#contact" },
@@ -165,7 +165,7 @@ const Header = () => {
                   <div className="border-b border-gray-700 pb-4">
                     <button
                       onClick={() => setIsProductsOpen(!isProductsOpen)}
-                      className="flex justify-between w-full text-white text-lg font-semibold">
+                      className="flex justify-between w-full text-white text-lg font-anton ">
                       Products
                       <ChevronDown
                         className={`transition-transform ${isProductsOpen ? "rotate-180" : ""}`}
@@ -196,7 +196,7 @@ const Header = () => {
                   {navItems.map((item) => (
                     <div
                       key={item.name}
-                      className="py-4 border-b border-gray-700 text-white text-lg font-semibold">
+                      className="py-4 border-b border-gray-700 text-white font-anton text-lg">
                       <a href={item.href} onClick={() => setIsMenuOpen(false)}>
                         {item.name}
                       </a>
@@ -207,16 +207,16 @@ const Header = () => {
                 {/* Need Help Box */}
                 <div className="bg-red-700 mb-16 backdrop-blur-md text-white mx-4 p-4 rounded-xl">
                   <h3 className="text-center text-lg font-bold mb-4">Need Help?</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-1 gap-4 text-sm">
                     <div>
-                      <p className="font-semibold mb-1">Text us on WhatsApp</p>
+                      <p className="font-semibold mb-1">WhatsApp No.</p>
                       <p className="flex items-center gap-2">
                         <a
-                          href="https://wa.me/919381001808"
+                          href="https://wa.me/919594274068"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 hover:underline">
-                          📱 +91 93810 01808
+                          📱 +91 95942 74068
                         </a>
                       </p>
                     </div>
@@ -225,9 +225,9 @@ const Header = () => {
                      <p className="flex items-center gap-2 break-words max-w-full sm:max-w-none">
                       <span>✉️</span>
                       <a
-                        href="mailto:info@neonattack.com"
-                        className="underline break-all max-w-[15ch] sm:max-w-none">
-                        info@neonattack.com
+                        href="mailto:shivkumar.signage@gmail.com"
+                        className="underline ">
+                        shivkumar.signage@gmail.com
                       </a>
                     </p>
                     </div>

@@ -68,8 +68,7 @@ const HeroSection = () => {
           </h1>
 
           <p className="text-sm line-clamp-2 md:text-lg text-white/90 font-medium max-w-2xl mx-auto leading-relaxed">
-            Bring your vision to life with our premium LED neon signs. From concept to creation, design the perfect
-            signage that represents your unique style and brand.
+            "Create stunning LED neon signs that showcase your brand and style."
           </p>
         </div>
 

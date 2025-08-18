@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createBlog, getBlogs, getBlogById, updateBlog, deleteBlog } = require('../controllers/blogController');
+const { createBlog, getBlogs, getBlogBySlug, getBlogById, updateBlog, deleteBlog } = require('../controllers/blogController');
 const upload = require('../config/multer'); // your multer config
 
 // With upload middleware
@@ -20,6 +20,7 @@ router.get('/:id/image', async (req, res) => {
   }
 });
 
+router.get('/:slug', getBlogBySlug); 
 router.get('/:id', getBlogById);
 router.put('/:id', updateBlog); // ✅ no upload middleware
 router.delete('/:id', deleteBlog);

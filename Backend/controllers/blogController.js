@@ -18,7 +18,7 @@ const createBlog = async (req, res) => {
       return res.status(400).json({ message: 'Invalid image format' });
     }
 
-    const contentType = matches[1]; // e.g., image/png
+    const contentType = matches[1];
     const buffer = Buffer.from(matches[2], 'base64');
 
     const blog = new Blog({
@@ -28,27 +28,41 @@ const createBlog = async (req, res) => {
         data: buffer,
         contentType,
       },
+      slug: title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, ''), // Generate slug
     });
 
     await blog.save();
-    res.status(201).json({ message: 'Blog created successfully', data: blog });
 
+    const formattedBlog = {
+      _id: blog._id,
+      title: blog.title,
+      slug: blog.slug,
+      description: blog.description,
+      createdAt: blog.createdAt,
+      image: blog.image?.data
+        ? `data:${blog.image.contentType};base64,${blog.image.data.toString('base64')}`
+        : null,
+    };
+
+    res.status(201).json({ message: 'Blog created successfully', data: formattedBlog });
   } catch (error) {
     console.error('Error creating blog:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-
-
 // READ: Get All Blogs
 const getBlogs = async (req, res) => {
-   try {
+  try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
-    
+
     const formattedBlogs = blogs.map(blog => ({
       _id: blog._id,
       title: blog.title,
+      slug: blog.slug,
       description: blog.description,
       createdAt: blog.createdAt,
       image: blog.image?.data
@@ -59,7 +73,7 @@ const getBlogs = async (req, res) => {
     res.status(200).json(formattedBlogs);
   } catch (error) {
     console.error('Error fetching blogs:', error);
-    res.status(500).json({ error: 'Server error while fetching blogs' });
+    res.status(500).json({ error: 'Server error while fetching blogs', error: error.message });
   }
 };
 
@@ -89,6 +103,38 @@ const getBlogById = async (req, res) => {
   }
 };
 
+// READ: Get Blog by Slug
+const getBlogBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Decode URL-encoded slug
+    const decodedSlug = decodeURIComponent(slug);
+
+    // Find blog by slug (case-insensitive)
+    const blog = await Blog.findOne({ slug: { $regex: `^${decodedSlug}$`, $options: 'i' } });
+
+    if (!blog) {
+      return res.status(404).json({ message: `Blog with slug "${decodedSlug}" not found` });
+    }
+
+    const formattedBlog = {
+      _id: blog._id,
+      title: blog.title,
+      slug: blog.slug,
+      description: blog.description,
+      createdAt: blog.createdAt,
+      image: blog.image?.data
+        ? `data:${blog.image.contentType};base64,${blog.image.data.toString('base64')}`
+        : null,
+    };
+
+    res.status(200).json(formattedBlog);
+  } catch (error) {
+    console.error('Error fetching blog by slug:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 // UPDATE: Blog by ID
 const updateBlog = async (req, res) => {
@@ -100,18 +146,49 @@ const updateBlog = async (req, res) => {
       return res.status(404).json({ message: 'Blog not found' });
     }
 
-    blog.image = image || blog.image;
-    blog.title = title || blog.title;
+    // Handle image update if provided
+    if (image) {
+      const matches = image.match(/^data:(.+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        return res.status(400).json({ message: 'Invalid image format' });
+      }
+      const contentType = matches[1];
+      const buffer = Buffer.from(matches[2], 'base64');
+      blog.image = {
+        data: buffer,
+        contentType,
+      };
+    }
+
+    // Update other fields if provided
+    if (title) {
+      blog.title = title;
+      blog.slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    }
     blog.description = description || blog.description;
 
     await blog.save();
-    res.status(200).json({ message: 'Blog updated successfully', data: blog });
+
+    const formattedBlog = {
+      _id: blog._id,
+      title: blog.title,
+      slug: blog.slug,
+      description: blog.description,
+      createdAt: blog.createdAt,
+      image: blog.image?.data
+        ? `data:${blog.image.contentType};base64,${blog.image.data.toString('base64')}`
+        : null,
+    };
+
+    res.status(200).json({ message: 'Blog updated successfully', data: formattedBlog });
   } catch (error) {
     console.error('Error updating blog:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 // DELETE: Blog by ID
 const deleteBlog = async (req, res) => {
@@ -131,6 +208,7 @@ module.exports = {
   createBlog,
   getBlogs,
   getBlogById,
+  getBlogBySlug,
   updateBlog,
   deleteBlog,
 };

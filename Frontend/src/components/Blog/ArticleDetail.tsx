@@ -6,13 +6,14 @@ import { FaWhatsapp } from "react-icons/fa";
 interface Blog {
   _id: string;
   image: string;
+  slug?: string; // Make slug optional to handle potential missing slugs
   title: string;
   description: string;
   createdAt: string;
 }
 
 const ArticleDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>(); // Changed from id to slug
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,31 +23,34 @@ const ArticleDetail: React.FC = () => {
       try {
         setLoading(true);
         const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const response = await fetch(`${BASE_URL}/api/blogs/${id}`);
+        console.log('Fetching blog from:', `${BASE_URL}/api/blogs/${slug}`); // Debug
+        const response = await fetch(`${BASE_URL}/api/blogs/${slug}`);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch blog");
+          throw new Error(`Failed to fetch blog: ${response.statusText}`);
         }
         const data: Blog = await response.json();
+        console.log('Blog data:', data); // Debug
         if (data) {
           setBlog(data);
         } else {
           setError("Blog not found");
         }
       } catch (err) {
-        setError("Failed to load blog");
+        console.error('Error fetching blog:', err);
+        setError("Failed to load blog. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchBlog();
-  }, [id]);
+  }, [slug]);
 
   // Share functionality
   const shareArticle = (platform: string) => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(`Check out this blog: ${blog?.title}!`);
+    const url = encodeURIComponent(`${window.location.origin}/blog/${blog?.slug || ''}`);
+    const text = encodeURIComponent(`Check out this blog: ${blog?.title || 'Blog Post'}!`);
 
     let shareUrl = "";
     switch (platform) {
@@ -124,84 +128,90 @@ const ArticleDetail: React.FC = () => {
       </div>
     );
   }
- 
+
   return (
-   <motion.div
-  variants={containerVariants}
-  initial="hidden"
-  animate="visible"
-  className="min-h-screen bg-[#E63025] pb-12 px-4 sm:px-6 lg:px-8"
->
-  <div className="max-w-7xl mx-auto mt-10 md:mt-16">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-      
-      {/* Left - Blog Image */}
-      <motion.div
-        variants={itemVariants}
-        className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10"
-      >
-        <img
-          src={blog?.image}
-          alt={blog?.title}
-          className="w-full h-auto object-contain md:h-full md:object-cover md:aspect-auto rounded-2xl"
-        />
-      </motion.div>
-
-      {/* Right - Blog Content */}
-      <motion.div
-        variants={itemVariants}
-        className="text-white space-y-6"
-      >
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-          {blog?.title}
-        </h1>
-
-      <div className="text-sm text-white/80 flex items-center gap-4 flex-wrap justify-between">
-        {/* Calendar Icon + Date */}
-        <div className="flex items-center gap-2">
-          <svg className="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="min-h-screen bg-[#E63025] pb-12 px-4 sm:px-6 lg:px-8"
+    >
+      <div className="max-w-7xl mx-auto mt-10 md:mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+          {/* Left - Blog Image */}
+          <motion.div
+            variants={itemVariants}
+            className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10"
+          >
+            <img
+              src={blog?.image}
+              alt={blog?.title}
+              className="w-full h-auto object-contain md:h-full md:object-cover md:aspect-auto rounded-2xl"
+              onError={(e) => {
+                e.currentTarget.src = 'https://via.placeholder.com/400x225?text=Image+Not+Found';
+              }}
             />
-          </svg>
-          <span>{new Date(blog?.createdAt || "").toLocaleDateString()}</span>
-        </div>
+          </motion.div>
 
-        {/* Share Buttons beside the date */}
-        <div className="flex items-center gap-3">
-          {socialPlatforms.map((social) => (
-            <motion.button
-              key={social}
-              whileHover={{ scale: 1.1, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-9 h-9 bg-[#FDCA07] rounded-full shadow-md flex items-center justify-center text-[#EA3C1F] hover:bg-[#FFD700] transition-colors"
-              onClick={() => shareArticle(social)}>
-              {social === "whatsapp" && <FaWhatsapp className="w-4 h-4 text-gray-700" />}
-            </motion.button>
-          ))}
+          {/* Right - Blog Content */}
+          <motion.div
+            variants={itemVariants}
+            className="text-white space-y-6"
+          >
+            <Link
+              to="/blog" className="inline-block mt-4 text-[#FDCA07] hover:text-[#FFD700] font-medium transition-colors">
+              ← Back to Blogs
+            </Link>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+              {blog?.title}
+            </h1>
+
+            <div className="text-sm text-white/80 flex items-center gap-4 flex-wrap justify-between">
+              {/* Calendar Icon + Date */}
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                <span>{new Date(blog?.createdAt || "").toLocaleDateString()}</span>
+              </div>
+
+              {/* Share Buttons beside the date */}
+              <div className="flex items-center gap-3">
+                {socialPlatforms.map((social) => (
+                  <motion.button
+                    key={social}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-9 h-9 bg-[#FDCA07] rounded-full shadow-md flex items-center justify-center text-[#EA3C1F] hover:bg-[#FFD700] transition-colors"
+                    onClick={() => shareArticle(social)}
+                  >
+                    {social === "whatsapp" && <FaWhatsapp className="w-4 h-4 text-gray-700" />}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            <motion.div
+              variants={itemVariants}
+              className="prose max-w-none prose-lg text-white space-y-6"
+            >
+              {blog?.description
+                .split(/\n{2,}/g)
+                .map((para, idx) => (
+                  <p key={idx} className="whitespace-pre-line">
+                    {para.trim()}
+                  </p>
+                ))}
+            </motion.div>
+          </motion.div>
         </div>
       </div>
-
-       <motion.div
-          variants={itemVariants}
-          className="prose max-w-none prose-lg text-white space-y-6">
-          {blog?.description
-            .split(/\n{2,}/g) // split into paragraphs on two or more line breaks
-            .map((para, idx) => (
-              <p key={idx} className="whitespace-pre-line">
-                {para.trim()}
-              </p>
-            ))}
-        </motion.div>
-
-      </motion.div>
-    </div>
-  </div>
-</motion.div>
-
+    </motion.div>
   );
 };
 

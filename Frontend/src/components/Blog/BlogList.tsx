@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Blog {
   _id: string;
   image: string;
+  slug: string;
   title: string;
   description: string;
   createdAt: string;
@@ -22,12 +23,14 @@ const BlogList: React.FC = () => {
       try {
         setLoading(true);
         const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        console.log('Fetching blogs from:', `${BASE_URL}/api/blogs`); // Debug
         const response = await fetch(`${BASE_URL}/api/blogs`);
 
         if (!response.ok) {
           throw new Error("Failed to fetch blogs");
         }
         const data: Blog[] = await response.json();
+        console.log('API response:', data); // Debug
         setBlogs(data || []);
       } catch (err) {
         console.error("Error fetching blogs:", err);
@@ -100,7 +103,8 @@ const BlogList: React.FC = () => {
   const SkeletonCard = () => (
     <motion.div
       variants={item}
-      className="bg-[#F9F5EF] rounded-xl overflow-hidden shadow-lg animate-pulse">
+      className="bg-[#F9F5EF] rounded-xl overflow-hidden shadow-lg animate-pulse"
+    >
       <div className="relative h-48 bg-gray-200" />
       <div className="p-4 sm:p-6">
         <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
@@ -186,7 +190,7 @@ const BlogList: React.FC = () => {
                   style={{ willChange: "transform, opacity" }}
                 >
                   <Link
-                    to={`/blog/${blog._id}`}
+                    to={`/blog/${blog.slug || blog.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
                     onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                     className="block h-full"
                   >

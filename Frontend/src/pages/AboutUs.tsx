@@ -8,8 +8,8 @@ const AboutUs = () => {
      <>
       <Helmet>
         <title>About Us | Crafting Personalized Sign Board & Gifts</title>
-        <meta name="description" content="Welcome to YourBrand. Discover custom t-shirts, bags, caps, and more." />
-        <link rel="canonical" href="https://yourdomain.com/" />
+        <meta name="description" content="Learn about Acrylic Sign Boards India – experts in premium acrylic signage, 3D letters & LED boards for businesses, shops & events." />
+        <link rel="canonical" href="https://acrylicsignboards.in/" />
       </Helmet>
 
     <div className="min-h-screen bg-[#E63025] overflow-x-hidden">

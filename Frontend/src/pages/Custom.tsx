@@ -8,8 +8,8 @@ export default function HomePage() {
         <>
          <Helmet>
         <title>Online Product Designer | Customize Neon Sign & More</title>
-        <meta name="description" content="Welcome to YourBrand. Discover custom t-shirts, bags, caps, and more." />
-        <link rel="canonical" href="https://yourdomain.com/" />
+        <meta name="description" content="Custom Neon Signage Board made with high-quality acrylic signage experience. Personalize with ease for events, branding & promotions." />
+        <link rel="canonical" href="https://acrylicsignboards.in/" />
         </Helmet>
         
         <div className="min-h-screen bg-[#E63025]">            

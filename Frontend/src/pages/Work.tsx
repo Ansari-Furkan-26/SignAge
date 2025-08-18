@@ -8,8 +8,8 @@ const Work = () => {
     <>
      <Helmet>
         <title>Explore Custom Products | Neon Sign</title>
-        <meta name="description" content="Welcome to YourBrand. Discover custom t-shirts, bags, caps, and more." />
-        <link rel="canonical" href="https://yourdomain.com/" />
+        <meta name="description" content="Explore our past works in acrylic signage – custom LED signs, 3D acrylic letters & branding projects for shops, offices & events in India." />
+        <link rel="canonical" href="https://acrylicsignboards.in/" />
       </Helmet>
       
        <div className="min-h-screen bg-[#E63025] overflow-x-hidden">

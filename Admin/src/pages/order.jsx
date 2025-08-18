@@ -3,12 +3,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar';
 import { Eye, Trash, CheckCircle, XCircle, Edit, Calendar, ChevronUp, ChevronDown, RefreshCw, Search } from 'lucide-react';
-import authHeader from '../utils/authHeader';
 import PreviewModal from '../components/PreviewModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-// Helper function to format text, including buffers
+// Helper function to format text
 const formatText = (value) => {
   if (value == null) return 'N/A';
   if (typeof value === 'string') return value;
@@ -19,7 +18,7 @@ const formatText = (value) => {
       return 'Invalid Buffer';
     }
   }
-  if (typeof value === 'object' && 'name' in value) return value.name; 
+  if (typeof value === 'object' && 'name' in value) return value.name;
   if (typeof value === 'object' && 'size' in value) return value.size;
   return String(value);
 };
@@ -50,6 +49,7 @@ const OrderListPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [statusLoading, setStatusLoading] = useState(null); // Track loading orderId
 
   const paginationData = useMemo(() => {
     const totalItems = orders.length;
@@ -78,7 +78,8 @@ const OrderListPage = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/api/orders`, { headers: authHeader() });
+      const res = await axios.get(`${API_BASE_URL}/api/orders`);
+      console.log('Fetched orders:', res.data); // Debug
       const formattedOrders = res.data.map((order) => ({
         ...order,
         orderId: order.orderId,
@@ -88,20 +89,62 @@ const OrderListPage = () => {
         type: formatText(order.type),
         font: formatText(order.font),
         totalPrice: parseFloat(order.totalPrice) || 0,
-        mobile: formatText(order.phoneNumber || order.mobile) || 'N/A',
-        status: order.isPaid ? 'Completed' : (order.status === 'Manufacturing' ? 'Manufacturing' : 'Pending'),
+        mobile: formatText(order.mobile) || 'N/A',
+        status: order.status || 'Pending', // Fallback to Pending
         createdAt: order.createdAt ? new Date(order.createdAt) : new Date(),
       }));
       setOriginalOrders(formattedOrders);
       setOrders(formattedOrders);
-      setLoading(false);
     } catch (err) {
       console.error('Failed to fetch orders:', err.response?.data || err.message);
       setErrorMessage(err.response?.data?.message || 'Failed to fetch orders. Please check your connection or login status.');
       setShowErrorModal(true);
       setOriginalOrders([]);
       setOrders([]);
+    } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleStatus = async (id, currentStatus) => {
+    if (currentStatus === 'Completed') return; // Prevent toggling if Completed
+    if (!id) {
+      setErrorMessage('Invalid order ID.');
+      setShowErrorModal(true);
+      return;
+    }
+    try {
+      setStatusLoading(id); // Set loading state
+      const newStatus = currentStatus === 'Pending' ? 'Manufacturing' : 'Completed';
+      // Optimistic update
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.orderId === id
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+      setOriginalOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.orderId === id
+            ? { ...order, status: newStatus }
+            : order
+        )
+      );
+      await axios.put(
+        `${API_BASE_URL}/api/orders/${id}`,
+        { status: newStatus }
+      );
+      console.log('Status updated for order:', id, newStatus); // Debug
+      await fetchOrders(); // Refresh from backend
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error('Toggle status failed:', err.response?.data || err.message);
+      await fetchOrders(); // Revert on failure
+      setErrorMessage(err.response?.data?.message || 'Failed to update status. Please try again.');
+      setShowErrorModal(true);
+    } finally {
+      setStatusLoading(null); // Clear loading state
     }
   };
 
@@ -112,7 +155,7 @@ const OrderListPage = () => {
       return;
     }
     try {
-      await axios.delete(`${API_BASE_URL}/api/orders/${id}`, { headers: authHeader() });
+      await axios.delete(`${API_BASE_URL}/api/orders/${id}`);
       setOrders(orders.filter((o) => o.orderId !== id));
       setOriginalOrders(originalOrders.filter((o) => o.orderId !== id));
       setShowDeleteModal(false);
@@ -120,29 +163,6 @@ const OrderListPage = () => {
     } catch (err) {
       console.error('Delete failed:', err.response?.data || err.message);
       setErrorMessage(err.response?.data?.message || 'Failed to delete order. Please try again.');
-      setShowErrorModal(true);
-    }
-  };
-
-  const toggleStatus = async (id, currentStatus) => {
-    if (currentStatus === 'Completed') return; // Prevent toggling if already Completed
-    if (!id) {
-      setErrorMessage('Invalid order ID.');
-      setShowErrorModal(true);
-      return;
-    }
-    try {
-      const newStatus = currentStatus === 'Pending' ? 'Manufacturing' : 'Completed';
-      await axios.put(
-        `${API_BASE_URL}/api/orders/${id}`,
-        { status: newStatus, isPaid: newStatus === 'Completed' },
-        { headers: authHeader() }
-      );
-      await fetchOrders();
-      setShowSuccessModal(true);
-    } catch (err) {
-      console.error('Toggle status failed:', err.response?.data || err.message);
-      setErrorMessage(err.response?.data?.message || 'Failed to update status. Please try again.');
       setShowErrorModal(true);
     }
   };
@@ -181,9 +201,7 @@ const OrderListPage = () => {
           totalPrice: parseFloat(selectedOrder.totalPrice) || 0,
           mobile: selectedOrder.mobile,
           status: selectedOrder.status,
-          isPaid: selectedOrder.status === 'Completed',
-        },
-        { headers: authHeader() }
+        }
       );
       setShowEditModal(false);
       setSelectedOrder(null);
@@ -412,17 +430,20 @@ const OrderListPage = () => {
                         </td>
                         <td className="p-3 text-gray-800">₹{order.totalPrice.toFixed(2)}</td>
                         <td className="p-3">
-                          <span
-                            className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium cursor-pointer ${
+                          <button
+                            onClick={() => toggleStatus(order.orderId, order.status)}
+                            className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-medium ${
                               order.status === 'Completed'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-100 text-green-800 cursor-not-allowed'
                                 : order.status === 'Manufacturing'
                                 ? 'bg-blue-100 text-blue-800'
                                 : 'bg-yellow-100 text-yellow-800'
                             }`}
-                            onClick={() => toggleStatus(order.orderId, order.status)}
+                            disabled={order.status === 'Completed' || statusLoading === order.orderId}
                           >
-                            {order.status === 'Completed' ? (
+                            {statusLoading === order.orderId ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-gray-600 mr-1"></div>
+                            ) : order.status === 'Completed' ? (
                               <>
                                 <CheckCircle className="w-4 h-4 mr-1" /> Completed
                               </>
@@ -435,16 +456,16 @@ const OrderListPage = () => {
                                 <XCircle className="w-4 h-4 mr-1" /> Pending
                               </>
                             )}
-                          </span>
+                          </button>
                         </td>
                         <td className="p-3 truncate max-w-xs text-gray-600" title={order.createdAt.toLocaleString()}>
                           {dateText.display}
                         </td>
-                        <td className="p-3 flex items-center space-x">
+                        <td className="p-3 flex items-center space-x-2">
                           <button
                             onClick={() => handleEdit(order)}
                             title="Edit Order"
-                            className="p-2 text-blue-600 hover:text-blue-200 transition-colors duration-200"
+                            className="p-2 text-blue-600 hover:text-blue-800 transition-colors duration-200"
                           >
                             <Edit className="w-5 h-5" />
                           </button>
@@ -454,7 +475,7 @@ const OrderListPage = () => {
                               setShowDeleteModal(true);
                             }}
                             title="Delete Order"
-                            className="p-2 text-red-600 text-hover-red-800 transition-colors duration-200"
+                            className="p-2 text-red-600 hover:text-red-800 transition-colors duration-200"
                           >
                             <Trash className="w-5 h-5" />
                           </button>
@@ -473,7 +494,6 @@ const OrderListPage = () => {
               </table>
             </div>
 
-            {/* Pagination Controls */}
             <div className="flex justify-between items-center mt-4">
               <div className="text-sm text-gray-600">
                 Showing {Math.min((currentPage - 1) * itemsPerPage + 1, paginationData.totalItems)} 
@@ -553,7 +573,7 @@ const OrderListPage = () => {
                     className="w-full p-2 border border-gray-300 rounded-lg"
                     required
                   />
-                </div> 
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Color</label>
                   <input
